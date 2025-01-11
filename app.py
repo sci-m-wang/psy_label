@@ -3,6 +3,16 @@ import random
 import streamlit as st
 import os
 
+os.system('pip install PyGithub')
+
+from github import Github
+
+gh_token = os.getenv('GITHUB_TOKEN')
+g = Github(gh_token)
+
+repo = g.get_repo('sci-m-wang/psy_label')
+branch = "main"
+
 def load_data(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
@@ -74,17 +84,27 @@ def app():
                     st.write(f'阶段 {stage["stage"]}: {stage["content"]}')
 
         # Create buttons for submitting the sample
+        file_path = f'annotator_{state.account}/D4_label_status.json'
         if st.button('推理链合理'):
             # Save the sample with status 0
             status[sample['id']] = 0
-            with open(f'annotator_{state.account}/D4_label_status.json', 'w') as f:
+            with open(file_path, 'w') as f:
                 json.dump(status, f)
                 pass
         if st.button('需要修改'):
             # Save the sample with status 1
             status[sample['id']] = 1
-            with open(f'annotator_{state.account}/D4_label_status.json', 'w') as f:
+            with open(file_path, 'w') as f:
                 json.dump(status, f)
+                pass
+            pass
+        # push to github
+        try:
+            repo.get_contents(f'annotator_{state.account}/D4_label_status.json')
+            repo.update_file(f'annotator_{state.account}/D4_label_status.json', 'Update label status', json.dumps(status), sha=repo.get_contents(f'annotator_{state.account}/D4_label_status.json').sha)
+        except:
+            repo.create_file(f'annotator_{state.account}/D4_label_status.json', 'Create label status', json.dumps(status))
+        pass
 
     else:
         st.write('No more samples to annotate.')
@@ -104,6 +124,7 @@ if __name__ == '__main__':
             std_password = os.getenv(f"annotator_{state.account}_password")
             if state.password == std_password:
                 state.signed_in = True
+                st.rerun()
                 pass
             else:
                 st.error('密码错误')
