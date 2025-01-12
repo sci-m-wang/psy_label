@@ -18,13 +18,12 @@ def load_data(file_path):
         data = json.load(f)
     return data
 
-def select_sample(status, data):
-    for index,key in enumerate(status, start=0):
-        if status[key] == -1:
-            first_index = index
+def select_sample(status, ids):
+    for id in ids:
+        if status[id] == -1:
+            _index = ids.index(id)
             break
-        pass
-    return first_index, data[first_index]
+    return _index
     # unsubmitted_sample_ids = [key for key in status if status[key] == -1]
     # unsubmitted_samples = [sample for sample in data if sample['id'] in unsubmitted_sample_ids]
     # # print(unsubmitted_samples)
@@ -34,6 +33,7 @@ def select_sample(status, data):
     #     return None
 
 def app():
+    state = st.session_state
     data = load_data('D4_seek_chain.json')
     # 检查是否存在标注状态文件，若不存在，创建并将所有样例的标注状态初始化为-1
     if not os.path.exists(f'annotator_{state.account}'):
@@ -44,7 +44,11 @@ def app():
             pass
         pass
     status = load_data(f'annotator_{state.account}/D4_label_status.json')
-    index, sample = select_sample(status, data)
+    if "ids" not in state:
+        state.ids = [sample['id'] for sample in data]
+        pass
+    index = select_sample(status, state.ids)
+    sample = data[index]
     # progess bar
     st.write(f'当前样例：{index+1}/{len(data)}')
     # print(sample)
@@ -107,7 +111,8 @@ def app():
                 pass
             pass
         if st.button("上一个"):
-            status[index-1] = -1
+            pre_id = state.ids[index-1]
+            status[pre_id] = -1
             with open(file_path, 'w') as f:
                 json.dump(status, f)
                 pass
