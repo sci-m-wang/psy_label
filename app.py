@@ -46,7 +46,7 @@ def app():
     status = load_data(f'annotator_{state.account}/D4_label_status.json')
     index, sample = select_sample(status, data)
     # progess bar
-    st.progress(index/len(data))
+    st.write(f'当前样例：{index+1}/{len(data)}')
     # print(sample)
     if sample:
         # Display portrait information
