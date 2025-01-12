@@ -18,14 +18,20 @@ def load_data(file_path):
         data = json.load(f)
     return data
 
-def select_random_sample(status, data):
-    unsubmitted_sample_ids = [key for key in status if status[key] == -1]
-    unsubmitted_samples = [sample for sample in data if sample['id'] in unsubmitted_sample_ids]
-    # print(unsubmitted_samples)
-    if unsubmitted_samples:
-        return random.choice(unsubmitted_samples)
-    else:
-        return None
+def select_sample(status, data):
+    for index,key in enumerate(status, start=0):
+        if status[key] == -1:
+            first_index = index
+            break
+        pass
+    return first_index, data[first_index]
+    # unsubmitted_sample_ids = [key for key in status if status[key] == -1]
+    # unsubmitted_samples = [sample for sample in data if sample['id'] in unsubmitted_sample_ids]
+    # # print(unsubmitted_samples)
+    # if unsubmitted_samples:
+    #     return random.choice(unsubmitted_samples)
+    # else:
+    #     return None
 
 def app():
     data = load_data('D4_seek_chain.json')
@@ -38,7 +44,9 @@ def app():
             pass
         pass
     status = load_data(f'annotator_{state.account}/D4_label_status.json')
-    sample = select_random_sample(status, data)
+    index, sample = select_sample(status, data)
+    # progess bar
+    st.progress(index/len(data))
     # print(sample)
     if sample:
         # Display portrait information
@@ -94,6 +102,12 @@ def app():
         if st.button('需要修改'):
             # Save the sample with status 1
             status[sample['id']] = 1
+            with open(file_path, 'w') as f:
+                json.dump(status, f)
+                pass
+            pass
+        if st.button("上一个"):
+            status[index-1] = -1
             with open(file_path, 'w') as f:
                 json.dump(status, f)
                 pass
